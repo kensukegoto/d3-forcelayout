@@ -15,6 +15,7 @@
 
 <script src="https://d3js.org/d3.v5.min.js"></script>
 <script>
+
   let svg = d3.select("svg");
   const width = +svg.attr("width"),
         height = +svg.attr("height");
@@ -27,7 +28,11 @@
     .force("center",d3.forceCenter(width/2,height/2))
     .force("charge",d3.forceManyBody().strength(-50))
     .force("collide",d3.forceCollide(10).strength(0.9))
-    .force("link",d3.forceLink().id(d => d.id))
+    .force("link",d3.forceLink().id(d => {
+      // // オブジェクトデータセットにあるリンク要素フィールド設定
+      console.log(d)
+      return d.id
+    }))
   
   d3.json("data/force.json")
     .then(graph => {
@@ -58,18 +63,27 @@
       node.append("title")
         .text(d => d.id)
 
+      // フォースレイアウト影響下に置くノードを指定
+      // これをしないと動かない
       simulation
         .nodes(graph.nodes)
         .on("tick",ticked)
-      simulation.force("link")
-        .links(graph.links)
 
+      // フォースレイアウト影響下に置くノード同士をつなげる線を指定
+      // ノードの指定をした上で無いと動かない
+      simulation
+        .force("link")
+        .links(graph.links)
+        
+      // 描画更新用関数
       function ticked(){
+
         link
           .attr("x1",d => d.source.x)
           .attr("y1",d => d.source.y)
           .attr("x2",d => d.target.x)
           .attr("y2",d => d.target.y)
+
         node
           .attr("cx",d => d.x)
           .attr("cy",d => d.y)
@@ -78,21 +92,24 @@
     })
 
     function dragstarted(d){
+      // d3.event.active => 0
+      console.log(d3.event)
       if(!d3.event.active) simulation.alphaTarget(.7).restart();
       d.fx = d.x;
       d.fy = d.y
     }
 
     function dragged(d){
+      // d3.event.active => 1
       d.fx = d3.event.x;
       d.fy = d3.event.y;
     }
 
     function dragended(d){
+      // d3.event.active => 0
       if(!d3.event.active) simulation.alphaTarget(0);
       d.fx = null;
       d.fy = null;
-
     }
 
   
